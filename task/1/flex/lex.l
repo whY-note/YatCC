@@ -16,6 +16,7 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 %%
 
+"const"     { ADDCOL(); COME(CONST); }
 "int"       { ADDCOL(); COME(INT); }
 "return"    { ADDCOL(); COME(RETURN); }
 
@@ -27,6 +28,7 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 "}"         { ADDCOL(); COME(R_BRACE); }
 
 "+"         { ADDCOL(); COME(PLUS); }
+"-"         { ADDCOL(); COME(MINUS); }
 
 ";"         { ADDCOL(); COME(SEMI); }
 ","         { ADDCOL(); COME(COMMA); }
@@ -40,9 +42,41 @@ L?\"(\\.|[^\\"\n])*\" { ADDCOL(); COME(STRING_LITERAL); }
 0[0-7]*{IS}?          { ADDCOL(); COME(CONSTANT); }
 [1-9]{D}*{IS}?        { ADDCOL(); COME(CONSTANT); }
 
-^#[^\n]*              { return ~YYEOF; } /* 预处理信息处理，可以从预处理信息中获得文件名以及行号 */
 
-[ \t\v\n\f]           { return ~YYEOF; } /* 需要处理行号和列号信息 */
+^#[^\n]*              {
+                        char filename[512];
+                        int lineno;
+                        int num2;
+                        if (sscanf(yytext, "# %d \"%[^\"]\" %d", &lineno, filename, &num2) == 3 ) {
+                            if (filename[0] != '<') {
+                                yylineno = 0;      /* 更新行号 */
+                                yyleng = 0;
+                                g.mFile = filename;     /* 文件名*/
+                            }
+                        }
+}
+
+[\t\f]               { ADDCOL(); return ~YYEOF; }
+
+[ ] {
+    g.mLeadingSpace = true;
+    ADDCOL(); return ~YYEOF;
+}
+
+\v {
+    g.mLine += 1;
+    g.mStartOfLine = true;
+    return ~YYEOF;
+}
+
+\n { 
+    g.mColumn = 1;
+    g.mLine += 1;
+    g.mStartOfLine = true;
+    return ~YYEOF;
+} /* 换行 */
+
+0[xX][0-9a-fA-F]+           {ADDCOL(); COME(CONSTANT);} /* 十六进制常量 */
 
 <<EOF>>     { ADDCOL(); COME(YYEOF); }
 

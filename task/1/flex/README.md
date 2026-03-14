@@ -34,13 +34,13 @@ using namespace lex;
 在`lex.l`中你可以定义一系列正则表达式为自己所用，例如你可以使用以下方法为正则表达式取一个别名，方便后续对这些正则表达式进行组合使用
 
 ```c++
-D     [0-9]
-L     [a-zA-Z_]
-H     [a-fA-F0-9]
-E     ([Ee][+-]?{D}+)
-P     ([Pp][+-]?{D}+)
-FS    (f|F|l|L)
-IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
+D     [0-9]          // number
+L     [a-zA-Z_]      // letter or '_'
+H     [a-fA-F0-9]    // Hex
+E     ([Ee][+-]?{D}+)// 科学计数法指数部分
+P     ([Pp][+-]?{D}+)// 十六进制浮点指数
+FS    (f|F|l|L)      // 浮点数后缀
+IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U)) // 整数后缀 integer suffix
 ```
 
 在`lex.l`中对关键字和数学符号等进行规则的编写十分简单，方法如下。
@@ -52,13 +52,23 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 上面代码中的,`auto`是一个词法单元，`COME(AUTO)`中的`AUTO`是我们在前面提到过的`lex.hpp`中的`enum Id`中被定义的枚举值。但`AUTO`并非我们在最终文件中输出的字符串，最终文件中`AUTO`对应输出的字符串需要到`lex.cpp`文件的`kTokenNames`数组的**对应位置**进行修改。
 
-所以最终进行总结，同学们的任务即是在`lex.l`中编写词法分析规则之后，到`enum Id`中去添加对应的枚举值，并且在`kTokenNames`的正确位置添加对应的输出字符串即可。
+### 总结
+任务是：
+1. 在`lex.l`中编写词法分析规则之后
+2. 到`enum Id`中去添加对应的枚举值
+3. 并且在`kTokenNames`的正确位置添加对应的输出字符串即可。
 
 
 
 ## 1.2 main.cpp代码介绍
 
-`main.cpp`中的 `main` 函数有三个输入参数，分别是程序名称`argv[0]`,输入文件路径`argv[1]`,输出文件路径`argv[2]`。其中 `argv[1]`在`main` 函数定义 `yyin` 时候使用，`yyin`是`flex`词法分析器的默认输入流指针，指向文件输入源，从而使词法分析器从指定文件读取输入。
+`main.cpp`中的 `main` 函数有三个输入参数，分别是程序名称`argv[0]`,输入文件路径`argv[1]`,输出文件路径`argv[2]`。
+
+- `argv[0]`: program name
+- `argv[1]`: input file path
+- `argv[2]`: output file path
+
+其中 `argv[1]`在`main` 函数定义 `yyin` 时候使用，`yyin`是`flex`词法分析器的默认输入流指针，指向文件输入源，从而使词法分析器从指定文件读取输入。
 
 `outFile`是一个`std::ofstream`类型的对象，用于向一个文件写入输出。在`main.cpp`中，它被用来打开并写入词法分析的结果, 它利用`argv[2]`进行初始化。
 

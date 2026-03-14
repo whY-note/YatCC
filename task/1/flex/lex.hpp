@@ -26,7 +26,9 @@ enum Id
   SEMI,
   EQUAL,
   PLUS,
-  COMMA
+  COMMA,
+  CONST,
+  MINUS
 };
 
 const char*
