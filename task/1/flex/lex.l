@@ -18,6 +18,10 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 "const"     { ADDCOL(); COME(CONST); }
 "int"       { ADDCOL(); COME(INT); }
+"void"      { ADDCOL(); COME(VOID); }
+"float"     { ADDCOL(); COME(FLOAT); }
+"double"    { ADDCOL(); COME(DOUBLE); }
+"char"      { ADDCOL(); COME(CHAR); }
 "return"    { ADDCOL(); COME(RETURN); }
 
 "("         { ADDCOL(); COME(L_PAREN); }
@@ -29,11 +33,23 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 "+"         { ADDCOL(); COME(PLUS); }
 "-"         { ADDCOL(); COME(MINUS); }
+"*"         { ADDCOL(); COME(STAR); }
+"/"         { ADDCOL(); COME(SLASH); }
+"%"         { ADDCOL(); COME(PERCENT); }
 
 ";"         { ADDCOL(); COME(SEMI); }
 ","         { ADDCOL(); COME(COMMA); }
 
 "="         { ADDCOL(); COME(EQUAL); }
+"=="        { ADDCOL(); COME(EQUALEQUAL); }
+">"         { ADDCOL(); COME(GREATER); }
+
+"&&"        { ADDCOL(); COME(AMPAMP); }
+"||"        { ADDCOL(); COME(PIPEPIPE); }
+
+"if"        { ADDCOL(); COME(IF); }
+"else"      { ADDCOL(); COME(ELSE); }
+
 
 {L}({L}|{D})*         { ADDCOL(); COME(IDENTIFIER); }
 
@@ -79,6 +95,9 @@ L?\"(\\.|[^\\"\n])*\" { ADDCOL(); COME(STRING_LITERAL); }
 0[xX][0-9a-fA-F]+           {ADDCOL(); COME(CONSTANT);} /* 十六进制常量 */
 
 <<EOF>>     { ADDCOL(); COME(YYEOF); }
+
+
+
 
 %%
 

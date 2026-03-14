@@ -12,7 +12,12 @@ static const char* kTokenNames[] = {
   "r_brace",      "l_square",           "r_square",
   "l_paren",      "r_paren",            "semi",
   "equal",        "plus",               "comma",
-  "const",        "minus"
+  "const",        "minus",              "star",
+  "slash",        "percent",            "if",
+  "greater",      "else",               "equalequal",
+  "void",         "float",              "double",
+  "char",         "ampamp",             "pipepipe",
+  
 };
 
 const char*

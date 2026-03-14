@@ -28,7 +28,21 @@ enum Id
   PLUS,
   COMMA,
   CONST,
-  MINUS
+  MINUS,
+  STAR,
+  SLASH,
+  PERCENT,
+  IF,
+  GREATER,
+  ELSE,
+  EQUALEQUAL,
+  VOID,
+  FLOAT,
+  DOUBLE,
+  CHAR,
+  AMPAMP,
+  PIPEPIPE,
+  
 };
 
 const char*
