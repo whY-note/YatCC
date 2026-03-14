@@ -7,17 +7,39 @@ print_token();
 namespace lex {
 
 static const char* kTokenNames[] = {
-  "identifier",   "numeric_constant",   "string_literal",
-  "int",          "return",             "l_brace",
-  "r_brace",      "l_square",           "r_square",
-  "l_paren",      "r_paren",            "semi",
-  "equal",        "plus",               "comma",
-  "const",        "minus",              "star",
-  "slash",        "percent",            "if",
-  "greater",      "else",               "equalequal",
-  "void",         "float",              "double",
-  "char",         "ampamp",             "pipepipe",
+  // Identifier and Contants
+  "identifier",   "numeric_constant",   "string_literal",                      
+
+  // 括号 Braces
+  "l_brace",      "r_brace",            "l_square",
+  "r_square",     "l_paren",            "r_paren",
+
+  // 分隔符 Delimiters
+  "semi",         "comma",
+
+  // Arithmetic Operators
+  "equal",        "plus",               "minus",      
+  "star",         "slash",              "percent",            
+
+  // Comparison Operators
+  "greater",      "less",               "greaterequal",
+  "lessequal",    "exclaimequal",       "equalequal",
   
+  // Logical Operators
+  "exclaim",      "ampamp",             "pipepipe",
+
+  // Keywords for Type Modifiers
+  "const",
+
+  // Keywords for Type
+  "void",         "float",              "double",
+  "char",         "int", 
+  "struct",       "class",
+
+  // Keywords for Control
+  "if",           "else",               "return",
+  "while",        "for",                "break",
+  "continue",
 };
 
 const char*

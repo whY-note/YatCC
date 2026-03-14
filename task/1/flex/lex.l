@@ -16,13 +16,6 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 
 %%
 
-"const"     { ADDCOL(); COME(CONST); }
-"int"       { ADDCOL(); COME(INT); }
-"void"      { ADDCOL(); COME(VOID); }
-"float"     { ADDCOL(); COME(FLOAT); }
-"double"    { ADDCOL(); COME(DOUBLE); }
-"char"      { ADDCOL(); COME(CHAR); }
-"return"    { ADDCOL(); COME(RETURN); }
 
 "("         { ADDCOL(); COME(L_PAREN); }
 ")"         { ADDCOL(); COME(R_PAREN); }
@@ -31,24 +24,51 @@ IS    ((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))
 "{"         { ADDCOL(); COME(L_BRACE); }
 "}"         { ADDCOL(); COME(R_BRACE); }
 
+
+";"         { ADDCOL(); COME(SEMI); }
+","         { ADDCOL(); COME(COMMA); }
+
+
+"="         { ADDCOL(); COME(EQUAL); }
 "+"         { ADDCOL(); COME(PLUS); }
 "-"         { ADDCOL(); COME(MINUS); }
 "*"         { ADDCOL(); COME(STAR); }
 "/"         { ADDCOL(); COME(SLASH); }
 "%"         { ADDCOL(); COME(PERCENT); }
 
-";"         { ADDCOL(); COME(SEMI); }
-","         { ADDCOL(); COME(COMMA); }
 
-"="         { ADDCOL(); COME(EQUAL); }
 "=="        { ADDCOL(); COME(EQUALEQUAL); }
 ">"         { ADDCOL(); COME(GREATER); }
+"<"         { ADDCOL(); COME(LESS); }
+">="        { ADDCOL(); COME(GREATEREQUAL); }
+"<="        { ADDCOL(); COME(LESSEQUAL); }
+"!="        { ADDCOL(); COME(EXCLAIMEQUAL); }
 
+
+"!"         { ADDCOL(); COME(EXCLAIM); }
 "&&"        { ADDCOL(); COME(AMPAMP); }
 "||"        { ADDCOL(); COME(PIPEPIPE); }
 
+
+"const"     { ADDCOL(); COME(CONST); }
+
+
+"void"      { ADDCOL(); COME(VOID); }
+"float"     { ADDCOL(); COME(FLOAT); }
+"double"    { ADDCOL(); COME(DOUBLE); }
+"char"      { ADDCOL(); COME(CHAR); }
+"int"       { ADDCOL(); COME(INT); }
+"struct"    { ADDCOL(); COME(STRUCT); }
+"class"     { ADDCOL(); COME(CLASS); }
+
+
 "if"        { ADDCOL(); COME(IF); }
 "else"      { ADDCOL(); COME(ELSE); }
+"return"    { ADDCOL(); COME(RETURN); }
+"while"     { ADDCOL(); COME(WHILE); }
+"for"       { ADDCOL(); COME(FOR); }
+"break"     { ADDCOL(); COME(BREAK); }
+"continue"  { ADDCOL(); COME(CONTINUE); }
 
 
 {L}({L}|{D})*         { ADDCOL(); COME(IDENTIFIER); }
@@ -62,10 +82,9 @@ L?\"(\\.|[^\\"\n])*\" { ADDCOL(); COME(STRING_LITERAL); }
 ^#[^\n]*              {
                         char filename[512];
                         int lineno;
-                        int num2;
-                        if (sscanf(yytext, "# %d \"%[^\"]\" %d", &lineno, filename, &num2) == 3 ) {
+                        if (sscanf(yytext, "# %d \"%[^\"]\"", &lineno, filename) == 2 ) {
                             if (filename[0] != '<') {
-                                yylineno = 0;      /* 更新行号 */
+                                yylineno = lineno-1;      /* 更新行号 */
                                 yyleng = 0;
                                 g.mFile = filename;     /* 文件名*/
                             }

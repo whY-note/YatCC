@@ -8,41 +8,70 @@ namespace lex {
 
 enum Id
 {
+  // Error
   YYEMPTY = -2,
   YYEOF = 0,     /* "end of file"  */
   YYerror = 256, /* error  */
   YYUNDEF = 257, /* "invalid token"  */
+
+  // Identifier and Contants
   IDENTIFIER,
   CONSTANT,
   STRING_LITERAL,
-  INT,
-  RETURN,
+  
+  // 括号 Braces
   L_BRACE,
   R_BRACE,
   L_SQUARE,
   R_SQUARE,
   L_PAREN,
   R_PAREN,
+
+  // 分隔符 Delimiters
   SEMI,
+  COMMA,
+
+  // Arithmetic Operators
   EQUAL,
   PLUS,
-  COMMA,
-  CONST,
   MINUS,
   STAR,
   SLASH,
   PERCENT,
-  IF,
+
+  // Comparison Operators
   GREATER,
-  ELSE,
+  LESS,
+  GREATEREQUAL,
+  LESSEQUAL,
+  EXCLAIMEQUAL,
   EQUALEQUAL,
+
+  // Logical Operators
+  EXCLAIM,
+  AMPAMP,
+  PIPEPIPE,
+
+  // Keywords for Type Modifiers
+  CONST,
+  
+  // Keywords for Type
   VOID,
   FLOAT,
   DOUBLE,
   CHAR,
-  AMPAMP,
-  PIPEPIPE,
-  
+  INT,
+  STRUCT,
+  CLASS,
+
+  // Keywords for Control
+  IF,
+  ELSE,
+  RETURN,
+  WHILE,
+  FOR,
+  BREAK,
+  CONTINUE,
 };
 
 const char*
