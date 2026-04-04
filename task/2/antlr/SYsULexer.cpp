@@ -12,21 +12,65 @@ using namespace SYsULexerTokens;
 
 static const std::unordered_map<std::string, size_t> kClangTokens{
   { "eof", antlr4::Token::EOF },
+
+  // Keywords for Type
   { "int", kInt },
+  { "void", kVoid },
+  { "float", kFloat },
+  { "double", kDouble },
+  { "char", kChar},
+  { "struct", kStruct },
+  { "class", kClass },
+
+  // Identifier and Contants
   { "identifier", kIdentifier },
+  { "numeric_constant", kConstant },
+  { "string_literal", kStringLiteral },
+
+  // 括号 Braces
   { "l_paren", kLeftParen },
   { "r_paren", kRightParen },
-  { "return", kReturn },
   { "r_brace", kRightBrace },
   { "l_brace", kLeftBrace },
-  { "numeric_constant", kConstant },
+  { "l_square", kLeftBracket },
+  { "r_square", kRightBracket },
+
+  // 分隔符 Delimiters
   { "semi", kSemi },
+  { "comma", kComma },
+
+  // Arithmetic Operators
   { "equal", kEqual },
   { "plus", kPlus },
   { "minus", kMinus },
-  { "comma", kComma },
-  { "l_square", kLeftBracket },
-  { "r_square", kRightBracket }
+  { "star", kStar },
+  { "slash", kDiv },
+  { "percent", kMod },
+
+  // Comparison Operators
+  { "greater", kGreater },
+  { "less", kLess },
+  { "greaterequal", kGreaterEqual },
+  { "lessequal", kLessEqual },
+  { "exclaimequal", kExclaimEqual },
+  { "equalequal", kEqualEqual },
+
+  // Logical Operators
+  { "exclaim", kExclaim },
+  { "ampamp", kAmpAmp },
+  { "pipepipe", kPipePipe },
+
+  // Keywords for Type Modifiers
+  { "const", kConst },
+
+  // Keywords for Control
+  { "return", kReturn },
+  { "if", kIf },
+  { "else", kElse },
+  { "while", kWhile },
+  { "for", kFor },
+  { "break", kBreak },
+  { "continue", kContinue }
 };
 
 } // namespace

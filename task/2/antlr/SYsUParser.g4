@@ -7,6 +7,8 @@ options {
 primaryExpression
     :   Identifier
     |   Constant
+    |   StringLiteral
+    |   LeftParen expression RightParen
     ;
 
 postfixExpression
@@ -21,13 +23,17 @@ unaryExpression
     ;
 
 unaryOperator
-    :   Plus | Minus
+    :   Plus | Minus | Star 
+    ;
+
+
+multiplicativeExpression
+    :   unaryExpression ((Star|Div|Mod) unaryExpression)*
     ;
 
 additiveExpression
-    :   unaryExpression ((Plus|Minus) unaryExpression)*
+    :   multiplicativeExpression ((Plus|Minus) multiplicativeExpression)*
     ;
-
 
 assignmentExpression
     :   additiveExpression
@@ -49,7 +55,9 @@ declarationSpecifiers
 
 declarationSpecifier
     :   typeSpecifier
+    |   typeQualifier 
     ;
+
 
 initDeclaratorList
     :   initDeclarator (Comma initDeclarator)*
@@ -61,10 +69,17 @@ initDeclarator
 
 
 typeSpecifier
-    :   Int
+    :   Int | Void | Float | Double | Char | Struct | Class
     ;
 
-
+typeQualifier
+    : Const
+    ;
+    
+typeQualifierList
+    : typeQualifier+
+    ;
+    
 declarator
     :   directDeclarator
     ;
@@ -118,6 +133,7 @@ jumpStatement
     Semi
     ;
 
+// 整个文件
 compilationUnit
     :   translationUnit? EOF
     ;
@@ -126,11 +142,13 @@ translationUnit
     :   externalDeclaration+
     ;
 
+// 全局元素
 externalDeclaration
-    :   functionDefinition
-    |   declaration
+    :   functionDefinition //函数
+    |   declaration //全局变量
     ;
 
+// 函数定义
 functionDefinition
     : declarationSpecifiers directDeclarator LeftParen RightParen compoundStatement
     ;

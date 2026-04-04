@@ -87,6 +87,13 @@ Ast2Asg::operator()(ast::DeclarationSpecifiersContext* ctx)
         ABORT(); // 未知的类型说明符
     }
 
+    else if (auto p = i->typeQualifier()) {
+      if (p->Const())
+        ret.second.const_ = true;
+      else
+        ABORT();
+    }
+
     else
       ABORT();
   }
@@ -220,11 +227,14 @@ Ast2Asg::operator()(ast::AssignmentExpressionContext* ctx)
   ret->rht = self(ctx->assignmentExpression());
   return ret;
 }
+
+
 Expr*
 Ast2Asg::operator()(ast::AdditiveExpressionContext* ctx)
 {
   auto children = ctx->children;
-  Expr* ret = self(dynamic_cast<ast::UnaryExpressionContext*>(children[0]));
+  // assert(dynamic_cast<ast::UnaryExpressionContext*>(children[0]));
+  Expr* ret =self(dynamic_cast<ast::MultiplicativeExpressionContext*>(children[0]));
 
   for (unsigned i = 1; i < children.size(); ++i) {
     auto node = make<BinaryExpr>();
@@ -239,6 +249,44 @@ Ast2Asg::operator()(ast::AdditiveExpressionContext* ctx)
 
       case ast::Minus:
         node->op = node->kSub;
+        break;
+
+      default:
+        ABORT();
+    }
+
+    node->lft = ret;
+    node->rht =
+      self(dynamic_cast<ast::MultiplicativeExpressionContext*>(children[++i]));
+    ret = node;
+  }
+
+  return ret;
+}
+
+Expr*
+Ast2Asg::operator()(ast::MultiplicativeExpressionContext* ctx)
+{
+  auto children = ctx->children;
+  Expr* ret = self(dynamic_cast<ast::UnaryExpressionContext*>(children[0]));
+
+  for (unsigned i = 1; i < children.size(); ++i) {
+    auto node = make<BinaryExpr>();
+
+    auto token = dynamic_cast<antlr4::tree::TerminalNode*>(children[i])
+                   ->getSymbol()
+                   ->getType();
+    switch (token) {
+      case ast::Star:
+        node->op = node->kMul;
+        break;
+
+      case ast::Div:
+        node->op = node->kDiv;
+        break;
+
+      case ast::Mod:
+        node->op = node->kMod;
         break;
 
       default:
@@ -319,6 +367,21 @@ Ast2Asg::operator()(ast::PrimaryExpressionContext* ctx)
     else
       ret->val = std::stoll(text.substr(1), nullptr, 8);
 
+    return ret;
+  }
+
+  if (auto p = ctx->StringLiteral()) {
+        auto text = p->getText();
+        auto ret = make<StringLiteral>();
+        // 去掉首尾引号
+        ret->val = text.substr(1, text.size() - 2);
+        return ret;
+  }
+
+  // Parenthesized expression: ( expression )
+  if (auto exprCtx = ctx->expression()) {
+    auto ret = make<ParenExpr>();
+    ret->sub = (*this)(exprCtx); // 括号里的 expression
     return ret;
   }
 
