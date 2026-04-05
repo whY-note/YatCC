@@ -38,12 +38,21 @@ additiveExpression
 assignmentExpression
     :   additiveExpression
     |   unaryExpression Equal assignmentExpression
+    // |   conditionalExpression
     ;
 
 expression
     :   assignmentExpression (Comma assignmentExpression)*
     ;
 
+// constantExpression
+//     : conditionalExpression
+//     ;
+
+// conditionalExpression
+//     : logical_or_expression
+//     | logical_or_expression '?' expression ':' conditional_expression
+//     ;
 
 declaration
     :   declarationSpecifiers initDeclaratorList? Semi
@@ -99,8 +108,22 @@ initializer
     ;
 
 initializerList
-    // :   designation? initializer (Comma designation? initializer)*
-    :   initializer (Comma initializer)*
+    :   designation? initializer (Comma designation? initializer)*
+    |   initializer (Comma initializer)*
+    ;
+
+designation
+    : designator_list Equal
+    ;
+
+designator_list
+    : designator
+    | designator_list designator
+    ;
+
+designator
+    : Dot Identifier
+    // | LeftBracket constantExpression RightBracket
     ;
 
 statement

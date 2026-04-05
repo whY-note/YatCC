@@ -19,6 +19,7 @@ RightBracket=15
 
 Semi=9
 Comma=13
+Dot=42
 
 Equal=10
 Plus=11

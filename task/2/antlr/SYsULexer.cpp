@@ -38,6 +38,7 @@ static const std::unordered_map<std::string, size_t> kClangTokens{
   // 分隔符 Delimiters
   { "semi", kSemi },
   { "comma", kComma },
+  { "dot", kDot},
 
   // Arithmetic Operators
   { "equal", kEqual },

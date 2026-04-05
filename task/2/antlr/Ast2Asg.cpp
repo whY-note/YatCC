@@ -388,6 +388,30 @@ Ast2Asg::operator()(ast::PrimaryExpressionContext* ctx)
   ABORT();
 }
 
+// Expr*
+// Ast2Asg::operator()(ast::InitializerContext* ctx)
+// {
+//   if (auto p = ctx->assignmentExpression())
+//     return self(p);
+
+//   auto ret = make<InitListExpr>();
+
+//   if (auto p = ctx->initializerList()) {
+//     for (auto&& i : p->initializer()) {
+//       // 将初始化列表展平
+//       auto expr = self(i);
+//       if (auto p = expr->dcst<InitListExpr>()) {
+//         for (auto&& sub : p->list)
+//           ret->list.push_back(sub);
+//       } else {
+//         ret->list.push_back(expr);
+//       }
+//     }
+//   }
+
+//   return ret;
+// }
+
 Expr*
 Ast2Asg::operator()(ast::InitializerContext* ctx)
 {
@@ -398,14 +422,8 @@ Ast2Asg::operator()(ast::InitializerContext* ctx)
 
   if (auto p = ctx->initializerList()) {
     for (auto&& i : p->initializer()) {
-      // 将初始化列表展平
-      auto expr = self(i);
-      if (auto p = expr->dcst<InitListExpr>()) {
-        for (auto&& sub : p->list)
-          ret->list.push_back(sub);
-      } else {
-        ret->list.push_back(expr);
-      }
+      // 先不要 flatten
+      ret->list.push_back(self(i));
     }
   }
 
@@ -570,8 +588,9 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
     type->texp = texp;
     vdecl->name = std::move(name);
 
-    if (auto p = ctx->initializer())
+    if (auto p = ctx->initializer()){
       vdecl->init = self(p);
+    }
     else
       vdecl->init = nullptr;
 
