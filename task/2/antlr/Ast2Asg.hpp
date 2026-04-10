@@ -76,6 +76,16 @@ public:
 
   Decl* operator()(ast::InitDeclaratorContext* ctx, SpecQual sq);
 
+  //============================================================================
+  // 辅助
+  //============================================================================
+  Expr* lowerInit(Type* type, Expr* init);
+  void flattenInit(Type* type, Expr* init, std::vector<Expr*>& out);
+  void appendZero(Type* type, std::vector<Expr*>& out);
+  Expr* makeZero();
+  int eval_arrlen_from_type(TypeExpr* t);
+
+
 private:
   struct Symtbl;
   Symtbl* mSymtbl{ nullptr };
@@ -88,5 +98,6 @@ private:
     return mMgr.make<T>(args...);
   }
 };
+
 
 } // namespace asg

@@ -589,7 +589,9 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
     vdecl->name = std::move(name);
 
     if (auto p = ctx->initializer()){
-      vdecl->init = self(p);
+      // vdecl->init = self(p); //origin
+      auto raw = self(p);
+      vdecl->init = lowerInit(type, raw);
     }
     else
       vdecl->init = nullptr;
@@ -601,5 +603,132 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
   (*mSymtbl)[ret->name] = ret;
   return ret;
 }
+
+  //============================================================================
+  // 辅助
+  //============================================================================
+Expr* Ast2Asg::lowerInit(Type* type, Expr* init)
+{
+  std::vector<Expr*> flat;
+
+  flattenInit(type, init, flat);
+
+  auto ret = make<InitListExpr>();
+  ret->list = std::move(flat);
+  return ret;
+}
+
+void Ast2Asg::flattenInit(Type* type, Expr* init, std::vector<Expr*>& out)
+{
+  // ========================
+  // 1️⃣ 标量类型
+  // ========================
+  if (!type->texp || !type->texp->dcst<ArrayType>()) {
+    if (auto list = init->dcst<InitListExpr>()) {
+      if (list->list.empty())
+        out.push_back(makeZero());
+      else
+        out.push_back(list->list[0]);
+    } else {
+      out.push_back(init);
+    }
+    return;
+  }
+
+  // ========================
+  // 2️⃣ 数组类型
+  // ========================
+  auto arr = type->texp->dcst<ArrayType>();
+  int N = arr->len;
+
+  // Type subType = *type;
+  // subType.texp = arr->sub;
+  Type* subType = make<Type>();
+  subType->spec = type->spec;
+  subType->qual = type->qual;
+  subType->texp = arr->sub;
+
+  std::vector<Expr*> elems;
+
+  if (auto list = init->dcst<InitListExpr>())
+    elems = list->list;
+  else
+    elems = { init };
+
+  int idx = 0;
+  int i = 0;
+
+  while (idx < N) {
+    if (i >= elems.size()) {
+      // 补零
+      appendZero(subType, out);
+      idx++;
+      continue;
+    }
+
+    Expr* cur = elems[i];
+
+    if (cur->dcst<InitListExpr>()) {
+      flattenInit(subType, cur, out);
+      i++;
+    }
+    else {
+      // ⭐ flatten 关键：连续填充子数组
+      if (arr->sub->dcst<ArrayType>()) {
+        int subSize = eval_arrlen_from_type(arr->sub); // 你需要实现
+        auto fake = make<InitListExpr>();
+
+        for (int k = 0; k < subSize && i < elems.size(); k++, i++) {
+          fake->list.push_back(elems[i]);
+        }
+
+        flattenInit(subType, fake, out);
+      }
+      else {
+        flattenInit(subType, cur, out);
+        i++;
+      }
+    }
+
+    idx++;
+  }
+}
+
+void Ast2Asg::appendZero(Type* type, std::vector<Expr*>& out)
+{
+  if (!type->texp || !type->texp->dcst<ArrayType>()) {
+    out.push_back(makeZero());
+    return;
+  }
+
+  auto arr = type->texp->dcst<ArrayType>();
+
+  // Type subType = *type;
+  // subType.texp = arr->sub;
+  Type* subType = make<Type>();
+  subType->spec = type->spec;
+  subType->qual = type->qual;
+  subType->texp = arr->sub;
+
+  for (int i = 0; i < arr->len; i++) {
+    appendZero(subType, out);
+  }
+}
+
+Expr* Ast2Asg::makeZero()
+{
+  auto zero = make<IntegerLiteral>();
+  zero->val = 0;
+  return zero;
+}
+
+int Ast2Asg::eval_arrlen_from_type(TypeExpr* t)
+{
+  if (auto arr = t->dcst<ArrayType>()) {
+    return arr->len * eval_arrlen_from_type(arr->sub);
+  }
+  return 1;
+}
+
 
 } // namespace asg
