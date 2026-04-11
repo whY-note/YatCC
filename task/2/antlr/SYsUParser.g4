@@ -190,7 +190,9 @@ expressionStatement
 
 
 jumpStatement
-    :   (Return expression?)
+    :   (Return expression?
+    |   Break
+    |   Continue)
     Semi
     ;
 

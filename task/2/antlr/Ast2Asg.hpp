@@ -104,6 +104,7 @@ private:
   Symtbl* mSymtbl{ nullptr };
 
   FunctionDecl* mCurrentFunc{ nullptr };
+  Stmt* mCurrentLoop{ nullptr };
 
   template<typename T, typename... Args>
   T* make(Args... args)

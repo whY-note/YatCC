@@ -673,7 +673,11 @@ Ast2Asg::operator()(ast::IterationStatementContext* ctx)
   if (ctx->While()) {
     auto ret = make<WhileStmt>();
     ret->cond = self(ctx->expression());
+
+    auto prevLoop = mCurrentLoop;
+    mCurrentLoop = ret;
     ret->body = self(ctx->statement());
+    mCurrentLoop = prevLoop;
 
     return ret;
   }
@@ -743,6 +747,20 @@ Ast2Asg::operator()(ast::JumpStatementContext* ctx)
     ret->func = mCurrentFunc;
     if (auto p = ctx->expression())
       ret->expr = self(p);
+    return ret;
+  }
+
+  if (ctx->Break()) {
+    ASSERT(mCurrentLoop != nullptr); // break 必须出现在循环中
+    auto ret = make<BreakStmt>();
+    ret->loop = mCurrentLoop;
+    return ret;
+  }
+
+  if (ctx->Continue()) {
+    ASSERT(mCurrentLoop != nullptr); // continue 必须出现在循环中
+    auto ret = make<ContinueStmt>();
+    ret->loop = mCurrentLoop;
     return ret;
   }
 
