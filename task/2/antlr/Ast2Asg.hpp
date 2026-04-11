@@ -42,6 +42,12 @@ public:
 
   Expr* operator()(ast::AssignmentExpressionContext* ctx);
 
+  Expr* operator()(ast::LogicalOrExpressionContext* ctx);
+
+  Expr* operator()(ast::LogicalAndExpressionContext* ctx);
+
+  Expr* operator()(ast::EqualityExpressionContext* ctx);
+
   Expr* operator()(ast::RelationalExpressionContext* ctx);
 
   Expr* operator()(ast::AdditiveExpressionContext* ctx);

@@ -34,7 +34,19 @@ unaryExpression
     ;
 
 unaryOperator
-    :   Plus | Minus | Star 
+    :   Plus | Minus | Star
+    ;
+
+logicalOrExpression
+    : logicalAndExpression (PipePipe logicalAndExpression)*
+    ;
+
+logicalAndExpression
+    : equalityExpression (AmpAmp equalityExpression)*
+    ;
+
+equalityExpression
+    : relationalExpression ((EqualEqual | ExclaimEqual) relationalExpression)*
     ;
 
 relationalExpression
@@ -51,7 +63,7 @@ multiplicativeExpression
 
 assignmentExpression
     :   unaryExpression Equal assignmentExpression
-    |   relationalExpression
+    |   logicalOrExpression
     // |   conditionalExpression
     ;
 

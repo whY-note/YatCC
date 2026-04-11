@@ -251,14 +251,6 @@ Ast2Asg::operator()(ast::ExpressionContext* ctx)
 Expr*
 Ast2Asg::operator()(ast::AssignmentExpressionContext* ctx)
 {
-  // if (auto p = ctx->additiveExpression())
-  //   return self(p);
-
-  // auto ret = make<BinaryExpr>();
-  // ret->op = ret->kAssign;
-  // ret->lft = self(ctx->unaryExpression());
-  // ret->rht = self(ctx->assignmentExpression());
-  // return ret;
   if (ctx->Equal())
   {
     auto ret = make<BinaryExpr>();
@@ -268,13 +260,90 @@ Ast2Asg::operator()(ast::AssignmentExpressionContext* ctx)
     return ret;
   }
 
-  return self(ctx->relationalExpression());
+  return self(ctx->logicalOrExpression());
+}
+
+Expr*
+Ast2Asg::operator()(ast::LogicalOrExpressionContext* ctx) {
+  auto children = ctx->children;
+  Expr* ret = self(dynamic_cast<ast::LogicalAndExpressionContext*>(children[0]));
+  for (unsigned i = 1; i < children.size(); i++) {
+    auto node = make<BinaryExpr>();
+
+    auto token = dynamic_cast<antlr4::tree::TerminalNode*>(children[i])
+                  ->getSymbol()
+                  ->getType();
+
+    switch (token) {
+      case ast::PipePipe:
+        node->op = node->kAnd;
+        break;
+      default:
+       ABORT();
+    }
+    node->lft = ret;
+    node->rht = self(dynamic_cast<ast::LogicalAndExpressionContext*>(children[++i]));
+    ret = node; 
+  }
+  return ret;
+}
+
+Expr*
+Ast2Asg::operator()(ast::LogicalAndExpressionContext* ctx) {
+  auto children = ctx->children;
+  Expr* ret = self(dynamic_cast<ast::EqualityExpressionContext*>(children[0]));
+  for (unsigned i = 1; i < children.size(); i++) {
+    auto node = make<BinaryExpr>();
+
+    auto token = dynamic_cast<antlr4::tree::TerminalNode*>(children[i])
+                  ->getSymbol()
+                  ->getType();
+    switch (token) {
+      case ast::AmpAmp:
+        node->op = node->kAnd;
+        break;
+      default:
+       ABORT();
+    }
+    node->lft = ret;
+    node->rht = self(dynamic_cast<ast::EqualityExpressionContext*>(children[++i]));
+    ret = node;
+  }
+  return ret;
+}
+
+Expr*
+Ast2Asg::operator()(ast::EqualityExpressionContext* ctx) {
+  auto children = ctx->children;
+  Expr* ret = self(dynamic_cast<ast::RelationalExpressionContext*>(children[0]));
+  for (unsigned i = 1; i < children.size(); i++) {
+    auto node = make<BinaryExpr>();
+
+    auto token = dynamic_cast<antlr4::tree::TerminalNode*>(children[i])
+                  ->getSymbol()
+                  ->getType();
+
+    switch (token) {
+      case ast::EqualEqual:
+        node->op = node->kEq;
+        break;
+      case ast::ExclaimEqual:
+        node->op = node->kNe;
+        break;
+      default:
+        ABORT();
+    }
+    node->lft = ret;
+    node->rht = self(dynamic_cast<ast::RelationalExpressionContext*>(children[++i]));
+    ret = node;
+  }
+  return ret;
 }
 
 Expr*
 Ast2Asg::operator()(ast::RelationalExpressionContext* ctx) {
   auto children = ctx->children;
-  Expr* ret =self(dynamic_cast<ast::AdditiveExpressionContext*>(children[0]));
+  Expr* ret = self(dynamic_cast<ast::AdditiveExpressionContext*>(children[0]));
   for (unsigned i = 1; i < children.size(); i++) {
     auto node = make<BinaryExpr>();
 
