@@ -42,6 +42,35 @@ Ast2Asg::operator()(ast::TranslationUnitContext* ctx)
 
   Symtbl localDecls(self);
 
+  // 兜底内建声明：允许在未显式声明 putint 的情况下完成符号解析。
+  if (localDecls.find("putint") == localDecls.end()) {
+    auto fdecl = make<FunctionDecl>();
+    fdecl->name = "putint";
+
+    auto retType = make<Type>();
+    retType->spec = Type::Spec::kVoid;
+    retType->qual = Type::Qual();
+
+    auto ftype = make<FunctionType>();
+    ftype->sub = nullptr;
+
+    auto argType = make<Type>();
+    argType->spec = Type::Spec::kInt;
+    argType->qual = Type::Qual();
+    argType->texp = nullptr;
+    ftype->params.push_back(argType);
+
+    retType->texp = ftype;
+    fdecl->type = retType;
+
+    auto argDecl = make<VarDecl>();
+    argDecl->name = "x";
+    argDecl->type = argType;
+    fdecl->params.push_back(argDecl);
+
+    localDecls[fdecl->name] = fdecl;
+  }
+
   for (auto&& i : ctx->externalDeclaration()) {
     if (auto p = i->declaration()) {
       auto decls = self(p);
@@ -84,6 +113,11 @@ Ast2Asg::operator()(ast::DeclarationSpecifiersContext* ctx)
       if (ret.first == Type::Spec::kINVALID) {
         if (p->Int())
           ret.first = Type::Spec::kInt;
+        else if (p->Void())
+          ret.first = Type::Spec::kVoid;
+        else if (p->Char())
+          ret.first = Type::Spec::kChar;
+        
         else
           ABORT(); // 未知的类型说明符
       }
@@ -746,6 +780,9 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
   // 处理参数列表
   if (ctx->parameterList()) {
     for (auto p : ctx->parameterList()->parameter()) {
+        if (!p->declarator())
+          ABORT(); // 函数定义中的参数必须具名
+
         auto [ptexp, pname] = self(p->declarator(), nullptr);
 
         auto psq = self(p->declarationSpecifiers());
@@ -784,7 +821,42 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
   auto [texp, name] = self(ctx->declarator(), nullptr);
   Decl* ret;
 
-  if (auto funcType = texp->dcst<FunctionType>()) {
+  FunctionType* declFuncType = nullptr;
+  std::vector<Decl*> declParams;
+
+  if (ctx->parameterList()) {
+    auto funcType = make<FunctionType>();
+    funcType->sub = texp;
+
+    for (auto p : ctx->parameterList()->parameter()) {
+      TypeExpr* ptexp = nullptr;
+      std::string pname;
+      if (p->declarator()) {
+        auto parsed = self(p->declarator(), nullptr);
+        ptexp = parsed.first;
+        pname = std::move(parsed.second);
+      }
+
+      auto psq = self(p->declarationSpecifiers());
+      auto ptype = make<Type>();
+      ptype->spec = psq.first;
+      ptype->qual = psq.second;
+      ptype->texp = ptexp;
+      funcType->params.push_back(ptype);
+
+      auto pdecl = make<VarDecl>();
+      pdecl->type = ptype;
+      pdecl->name = pname;
+      declParams.push_back(pdecl);
+    }
+
+    declFuncType = funcType;
+  }
+
+  else if (texp)
+    declFuncType = texp->dcst<FunctionType>();
+
+  if (auto funcType = declFuncType) {
     auto fdecl = make<FunctionDecl>();
     auto type = make<Type>();
     fdecl->type = type;
@@ -794,10 +866,15 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
     type->texp = funcType;
 
     fdecl->name = std::move(name);
-    for (auto p : funcType->params) {
-      auto paramDecl = make<VarDecl>();
-      paramDecl->type = p;
-      fdecl->params.push_back(paramDecl);
+
+    if (!declParams.empty())
+      fdecl->params = std::move(declParams);
+    else {
+      for (auto p : funcType->params) {
+        auto paramDecl = make<VarDecl>();
+        paramDecl->type = p;
+        fdecl->params.push_back(paramDecl);
+      }
     }
 
     if (ctx->initializer())

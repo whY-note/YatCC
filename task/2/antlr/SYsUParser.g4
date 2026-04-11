@@ -99,7 +99,7 @@ initDeclaratorList
     ;
 
 initDeclarator
-    :   declarator (Equal initializer)?
+    :   declarator (LeftParen parameterList? RightParen)? (Equal initializer)?
     ;
 
 
@@ -220,5 +220,5 @@ parameterList
     ;
 
 parameter
-    : declarationSpecifiers declarator
+    : declarationSpecifiers declarator?
     ;
