@@ -180,6 +180,7 @@ Ast2Asg::operator()(ast::DirectDeclaratorContext* ctx, TypeExpr* sub)
   if (auto p = ctx->Identifier())
     return { sub, p->getText() };
 
+  // Array Declaration
   if (ctx->LeftBracket()) {
     auto arrayType = make<ArrayType>();
     arrayType->sub = sub;
@@ -191,6 +192,33 @@ Ast2Asg::operator()(ast::DirectDeclaratorContext* ctx, TypeExpr* sub)
 
     return self(ctx->directDeclarator(), arrayType);
   }
+
+  // // Function Declaration
+  // if (ctx->LeftParen())
+  // {
+  //   auto funcType = make<FunctionType>();
+  //   funcType->sub = sub;
+
+  //   // 参数
+  //   if (auto plist = ctx->parameterList())
+  //   {
+  //     for (auto p : plist->parameter())
+  //     {
+  //       auto [ptexp, pname] = self(p->declarator(), nullptr);
+
+  //       auto psq = self(p->declarationSpecifiers());
+
+  //       auto ptype = make<Type>();
+  //       ptype->spec = psq.first;
+  //       ptype->qual = psq.second;
+  //       ptype->texp = ptexp;
+
+  //       funcType->params.push_back(ptype);
+  //     }
+  //   }
+
+  //   return self(ctx->directDeclarator(), funcType);
+  // }
 
   ABORT();
 }
@@ -219,16 +247,63 @@ Ast2Asg::operator()(ast::ExpressionContext* ctx)
 Expr*
 Ast2Asg::operator()(ast::AssignmentExpressionContext* ctx)
 {
-  if (auto p = ctx->additiveExpression())
-    return self(p);
+  // if (auto p = ctx->additiveExpression())
+  //   return self(p);
 
-  auto ret = make<BinaryExpr>();
-  ret->op = ret->kAssign;
-  ret->lft = self(ctx->unaryExpression());
-  ret->rht = self(ctx->assignmentExpression());
-  return ret;
+  // auto ret = make<BinaryExpr>();
+  // ret->op = ret->kAssign;
+  // ret->lft = self(ctx->unaryExpression());
+  // ret->rht = self(ctx->assignmentExpression());
+  // return ret;
+  if (ctx->Equal())
+  {
+    auto ret = make<BinaryExpr>();
+    ret->op = ret->kAssign;
+    ret->lft = self(ctx->unaryExpression());
+    ret->rht = self(ctx->assignmentExpression());
+    return ret;
+  }
+
+  return self(ctx->additiveExpression());
 }
 
+Expr*
+Ast2Asg::operator()(ast::RelationalExpressionContext* ctx) {
+  auto children = ctx->children;
+  Expr* ret =self(dynamic_cast<ast::AdditiveExpressionContext*>(children[0]));
+  for (unsigned i = 1; i < children.size(); i++) {
+    auto node = make<BinaryExpr>();
+
+    auto token = dynamic_cast<antlr4::tree::TerminalNode*>(children[i])
+                    ->getSymbol()
+                    ->getType();
+
+    switch (token) {
+      case ast::Less:
+        node->op = node->kLt;
+        break;
+
+      case ast::LessEqual:
+        node->op = node->kLe;
+        break;
+      
+      case ast::Greater:
+        node->op = node->kGt;
+        break;
+      
+      case ast::GreaterEqual:
+        node->op = node->kGe;
+        break;
+
+      default:
+        ABORT();
+    }
+    node->lft = ret;
+    node->rht = self(dynamic_cast<ast::AdditiveExpressionContext*>(children[++i]));
+    ret = node;
+  }
+  return ret;
+}
 
 Expr*
 Ast2Asg::operator()(ast::AdditiveExpressionContext* ctx)
@@ -563,10 +638,12 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
   auto sq = self(ctx->declarationSpecifiers());
   type->spec = sq.first, type->qual = sq.second;
 
-  auto [texp, name] = self(ctx->directDeclarator(), nullptr);
+  auto [texp, name] = self(ctx->declarator(), nullptr);
   auto funcType = make<FunctionType>();
   funcType->sub = texp;
   type->texp = funcType;
+
+  // type->texp = texp;
 
   Symtbl funcScope(self);
 
@@ -583,8 +660,6 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
         param_type->spec = psq.first;
         param_type->qual = psq.second;
         param_type->texp = ptexp;
-
-        funcType->params.push_back(param_type);
 
         auto vdecl = make<VarDecl>();
         vdecl->type = param_type;

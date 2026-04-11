@@ -45,18 +45,21 @@ unaryOperator
     :   Plus | Minus | Star 
     ;
 
-
-multiplicativeExpression
-    :   unaryExpression ((Star|Div|Mod) unaryExpression)*
+relationalExpression
+    : additiveExpression ((Less | LessEqual | Greater | GreaterEqual) additiveExpression)*
     ;
 
 additiveExpression
     :   multiplicativeExpression ((Plus|Minus) multiplicativeExpression)*
     ;
 
+multiplicativeExpression
+    :   unaryExpression ((Star|Div|Mod) unaryExpression)*
+    ;
+
 assignmentExpression
-    :   additiveExpression
-    |   unaryExpression Equal assignmentExpression
+    :   unaryExpression Equal assignmentExpression
+    |   additiveExpression   
     // |   conditionalExpression
     ;
 
@@ -112,9 +115,15 @@ declarator
     :   directDeclarator
     ;
 
+// directDeclarator
+//     :   Identifier
+//     |   directDeclarator LeftBracket assignmentExpression? RightBracket
+//     ;
+
 directDeclarator
-    :   Identifier
-    |   directDeclarator LeftBracket assignmentExpression? RightBracket
+    : Identifier
+    | directDeclarator LeftBracket assignmentExpression? RightBracket
+    // | directDeclarator LeftParen parameterList? RightParen
     ;
 
 identifierList
@@ -192,9 +201,11 @@ externalDeclaration
 
 // 函数定义
 functionDefinition
-    : declarationSpecifiers directDeclarator LeftParen parameterList? RightParen compoundStatement
+    : declarationSpecifiers declarator LeftParen (parameterList)? RightParen compoundStatement
+    // : declarationSpecifiers declarator compoundStatement
     ;
-
+    
+// 参数列表
 parameterList
     : parameter (Comma parameter)*
     ;
