@@ -671,6 +671,8 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
 
         (*mSymtbl)[pname] = vdecl;
 
+        ret->params.push_back(vdecl);
+
         funcType->params.push_back(param_type);
     }
   }
