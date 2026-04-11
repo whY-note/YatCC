@@ -56,6 +56,7 @@ Ast2Asg::operator()(ast::TranslationUnitContext* ctx)
 
       // 添加到声明表
       localDecls[funcDecl->name] = funcDecl;
+      // (*mSymtbl)[funcDecl->name] = funcDecl;
     }
 
     else
@@ -333,9 +334,61 @@ Ast2Asg::operator()(ast::UnaryExpressionContext* ctx)
 Expr*
 Ast2Asg::operator()(ast::PostfixExpressionContext* ctx)
 {
-  auto children = ctx->children;
-  auto sub = self(dynamic_cast<ast::PrimaryExpressionContext*>(children[0]));
-  return sub;
+  Expr* ret =
+      self(ctx->primaryExpression());
+
+  for (auto suffix : ctx->postfixSuffix())
+  {
+    // array index
+    if (suffix->LeftBracket())
+    {
+      auto indexExpr =
+          self(suffix->expression());
+
+      auto node = make<BinaryExpr>();
+      node->op = BinaryExpr::kIndex;
+
+      node->lft = addImplicitCast(
+          ret,
+          ImplicitCastExpr::Kind::kArrayToPointerDecay);
+
+      node->rht = addImplicitCast(
+          indexExpr,
+          ImplicitCastExpr::Kind::kLValueToRValue);
+
+      ret = node;
+      continue;
+    }
+
+    // function call
+    if (suffix->LeftParen())
+    {
+      auto call = make<CallExpr>();
+      call->head = ret;
+
+      auto declref = ret->dcst<DeclRefExpr>();
+      if (!declref || !declref->decl->dcst<FunctionDecl>()) {
+        ABORT();
+      }
+
+      auto argsCtx = suffix->argumentExpressionList();
+
+      if (argsCtx)
+      {
+        for (auto expr : argsCtx->assignmentExpression())
+        {
+          call->args.push_back(self(expr));
+        }
+      }
+
+      ret = call;
+      continue;
+    }
+
+    ABORT();
+  }
+
+  return ret;
 }
 
 Expr*
@@ -388,29 +441,6 @@ Ast2Asg::operator()(ast::PrimaryExpressionContext* ctx)
   ABORT();
 }
 
-// Expr*
-// Ast2Asg::operator()(ast::InitializerContext* ctx)
-// {
-//   if (auto p = ctx->assignmentExpression())
-//     return self(p);
-
-//   auto ret = make<InitListExpr>();
-
-//   if (auto p = ctx->initializerList()) {
-//     for (auto&& i : p->initializer()) {
-//       // 将初始化列表展平
-//       auto expr = self(i);
-//       if (auto p = expr->dcst<InitListExpr>()) {
-//         for (auto&& sub : p->list)
-//           ret->list.push_back(sub);
-//       } else {
-//         ret->list.push_back(expr);
-//       }
-//     }
-//   }
-
-//   return ret;
-// }
 
 Expr*
 Ast2Asg::operator()(ast::InitializerContext* ctx)
@@ -537,6 +567,35 @@ Ast2Asg::operator()(ast::FunctionDefinitionContext* ctx)
   auto funcType = make<FunctionType>();
   funcType->sub = texp;
   type->texp = funcType;
+
+  Symtbl funcScope(self);
+
+  // 把函数加入符号表（支持递归）
+  (*mSymtbl)[name] = ret;
+  
+  // 处理参数列表
+  if (ctx->parameterList()) {
+    for (auto p : ctx->parameterList()->parameter()) {
+        auto [ptexp, pname] = self(p->declarator(), nullptr);
+
+        auto psq = self(p->declarationSpecifiers());
+        auto param_type = make<Type>();
+        param_type->spec = psq.first;
+        param_type->qual = psq.second;
+        param_type->texp = ptexp;
+
+        funcType->params.push_back(param_type);
+
+        auto vdecl = make<VarDecl>();
+        vdecl->type = param_type;
+        vdecl->name = pname;
+
+        (*mSymtbl)[pname] = vdecl;
+
+        funcType->params.push_back(param_type);
+    }
+  }
+  
   ret->name = std::move(name);
 
   Symtbl localDecls(self);
@@ -641,8 +700,6 @@ void Ast2Asg::flattenInit(Type* type, Expr* init, std::vector<Expr*>& out)
   auto arr = type->texp->dcst<ArrayType>();
   int N = arr->len;
 
-  // Type subType = *type;
-  // subType.texp = arr->sub;
   Type* subType = make<Type>();
   subType->spec = type->spec;
   subType->qual = type->qual;
@@ -675,7 +732,7 @@ void Ast2Asg::flattenInit(Type* type, Expr* init, std::vector<Expr*>& out)
     else {
       // ⭐ flatten 关键：连续填充子数组
       if (arr->sub->dcst<ArrayType>()) {
-        int subSize = eval_arrlen_from_type(arr->sub); // 你需要实现
+        int subSize = eval_arrlen_from_type(arr->sub); 
         auto fake = make<InitListExpr>();
 
         for (int k = 0; k < subSize && i < elems.size(); k++, i++) {
@@ -703,8 +760,6 @@ void Ast2Asg::appendZero(Type* type, std::vector<Expr*>& out)
 
   auto arr = type->texp->dcst<ArrayType>();
 
-  // Type subType = *type;
-  // subType.texp = arr->sub;
   Type* subType = make<Type>();
   subType->spec = type->spec;
   subType->qual = type->qual;
@@ -728,6 +783,14 @@ int Ast2Asg::eval_arrlen_from_type(TypeExpr* t)
     return arr->len * eval_arrlen_from_type(arr->sub);
   }
   return 1;
+}
+
+Expr* Ast2Asg::addImplicitCast(Expr* e, ImplicitCastExpr::Kind kind)
+{
+  auto node = make<ImplicitCastExpr>();
+  node->kind = kind;
+  node->sub = e;
+  return node;
 }
 
 

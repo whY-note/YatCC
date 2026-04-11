@@ -84,6 +84,7 @@ public:
   void appendZero(Type* type, std::vector<Expr*>& out);
   Expr* makeZero();
   int eval_arrlen_from_type(TypeExpr* t);
+  Expr* addImplicitCast(Expr* e, ImplicitCastExpr::Kind kind);
 
 
 private:

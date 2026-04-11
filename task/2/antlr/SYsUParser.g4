@@ -11,8 +11,27 @@ primaryExpression
     |   LeftParen expression RightParen
     ;
 
+// postfixExpression
+//     : primaryExpression
+//       (
+//           LeftBracket expression RightBracket
+//         | LeftParen argumentExpressionList? RightParen
+//       )*
+//     | postfixExpression LeftParen argumentExpressionList? RightParen
+//     ;
+
 postfixExpression
-    :   primaryExpression  
+    : primaryExpression postfixSuffix*
+    ;
+
+postfixSuffix
+    : LeftBracket expression RightBracket
+    | LeftParen argumentExpressionList? RightParen
+    ;
+
+
+argumentExpressionList
+    : assignmentExpression (Comma assignmentExpression)*
     ;
 
 unaryExpression
@@ -173,6 +192,13 @@ externalDeclaration
 
 // 函数定义
 functionDefinition
-    : declarationSpecifiers directDeclarator LeftParen RightParen compoundStatement
+    : declarationSpecifiers directDeclarator LeftParen parameterList? RightParen compoundStatement
     ;
 
+parameterList
+    : parameter (Comma parameter)*
+    ;
+
+parameter
+    : declarationSpecifiers declarator
+    ;

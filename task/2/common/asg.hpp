@@ -240,7 +240,7 @@ struct ImplicitInitExpr : Expr
 
 struct ImplicitCastExpr : Expr
 {
-  enum
+  enum Kind
   {
     kINVALID,
     kLValueToRValue,
