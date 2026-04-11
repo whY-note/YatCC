@@ -48,6 +48,10 @@ Ast2Asg::operator()(ast::TranslationUnitContext* ctx)
       ret->decls.insert(ret->decls.end(),
                         std::make_move_iterator(decls.begin()),
                         std::make_move_iterator(decls.end()));
+
+      // 全局声明需要进入符号表，供后续函数体内标识符解析使用。
+      for (auto* decl : decls)
+        localDecls[decl->name] = decl;
     }
 
     else if (auto p = i->functionDefinition()) {
