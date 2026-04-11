@@ -268,7 +268,7 @@ Ast2Asg::operator()(ast::AssignmentExpressionContext* ctx)
     return ret;
   }
 
-  return self(ctx->additiveExpression());
+  return self(ctx->relationalExpression());
 }
 
 Expr*
@@ -549,11 +549,31 @@ Ast2Asg::operator()(ast::StatementContext* ctx)
   if (auto p = ctx->compoundStatement())
     return self(p);
 
+  if (auto p = ctx->selectionStatement())
+    return self(p);
+
   if (auto p = ctx->expressionStatement())
     return self(p);
 
   if (auto p = ctx->jumpStatement())
     return self(p);
+
+  ABORT();
+}
+
+Stmt*
+Ast2Asg::operator()(ast::SelectionStatementContext* ctx)
+{
+  if (ctx->If()) {
+    auto ret = make<IfStmt>();
+    ret->cond = self(ctx->expression());
+    ret->then = self(ctx->statement(0));
+
+    if (ctx->Else())
+      ret->else_ = self(ctx->statement(1));
+
+    return ret;
+  }
 
   ABORT();
 }

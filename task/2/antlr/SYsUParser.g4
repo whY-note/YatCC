@@ -11,14 +11,6 @@ primaryExpression
     |   LeftParen expression RightParen
     ;
 
-// postfixExpression
-//     : primaryExpression
-//       (
-//           LeftBracket expression RightBracket
-//         | LeftParen argumentExpressionList? RightParen
-//       )*
-//     | postfixExpression LeftParen argumentExpressionList? RightParen
-//     ;
 
 postfixExpression
     : primaryExpression postfixSuffix*
@@ -59,7 +51,7 @@ multiplicativeExpression
 
 assignmentExpression
     :   unaryExpression Equal assignmentExpression
-    |   additiveExpression   
+    |   relationalExpression
     // |   conditionalExpression
     ;
 
@@ -156,8 +148,13 @@ designator
 
 statement
     :   compoundStatement
+    |   selectionStatement
     |   expressionStatement
     |   jumpStatement
+    ;
+
+selectionStatement
+    :   If LeftParen expression RightParen statement (Else statement)?
     ;
 
 compoundStatement
