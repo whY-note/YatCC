@@ -824,30 +824,32 @@ Ast2Asg::operator()(ast::InitDeclaratorContext* ctx, SpecQual sq)
   FunctionType* declFuncType = nullptr;
   std::vector<Decl*> declParams;
 
-  if (ctx->parameterList()) {
+  if (ctx->LeftParen()) {
     auto funcType = make<FunctionType>();
     funcType->sub = texp;
 
-    for (auto p : ctx->parameterList()->parameter()) {
-      TypeExpr* ptexp = nullptr;
-      std::string pname;
-      if (p->declarator()) {
-        auto parsed = self(p->declarator(), nullptr);
-        ptexp = parsed.first;
-        pname = std::move(parsed.second);
+    if (ctx->parameterList()) {
+      for (auto p : ctx->parameterList()->parameter()) {
+        TypeExpr* ptexp = nullptr;
+        std::string pname;
+        if (p->declarator()) {
+          auto parsed = self(p->declarator(), nullptr);
+          ptexp = parsed.first;
+          pname = std::move(parsed.second);
+        }
+
+        auto psq = self(p->declarationSpecifiers());
+        auto ptype = make<Type>();
+        ptype->spec = psq.first;
+        ptype->qual = psq.second;
+        ptype->texp = ptexp;
+        funcType->params.push_back(ptype);
+
+        auto pdecl = make<VarDecl>();
+        pdecl->type = ptype;
+        pdecl->name = pname;
+        declParams.push_back(pdecl);
       }
-
-      auto psq = self(p->declarationSpecifiers());
-      auto ptype = make<Type>();
-      ptype->spec = psq.first;
-      ptype->qual = psq.second;
-      ptype->texp = ptexp;
-      funcType->params.push_back(ptype);
-
-      auto pdecl = make<VarDecl>();
-      pdecl->type = ptype;
-      pdecl->name = pname;
-      declParams.push_back(pdecl);
     }
 
     declFuncType = funcType;
