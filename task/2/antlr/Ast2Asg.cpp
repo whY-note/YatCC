@@ -276,7 +276,7 @@ Ast2Asg::operator()(ast::LogicalOrExpressionContext* ctx) {
 
     switch (token) {
       case ast::PipePipe:
-        node->op = node->kAnd;
+        node->op = node->kOr;
         break;
       default:
        ABORT();
