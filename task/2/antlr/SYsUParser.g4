@@ -119,11 +119,6 @@ declarator
     :   directDeclarator
     ;
 
-// directDeclarator
-//     :   Identifier
-//     |   directDeclarator LeftBracket assignmentExpression? RightBracket
-//     ;
-
 directDeclarator
     : Identifier
     | directDeclarator LeftBracket assignmentExpression? RightBracket
@@ -161,8 +156,14 @@ designator
 statement
     :   compoundStatement
     |   selectionStatement
+    |   iterationStatement
     |   expressionStatement
     |   jumpStatement
+    ;
+
+
+iterationStatement
+    :   While LeftParen expression RightParen statement
     ;
 
 selectionStatement

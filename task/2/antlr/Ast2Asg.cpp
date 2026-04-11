@@ -655,12 +655,28 @@ Ast2Asg::operator()(ast::StatementContext* ctx)
   if (auto p = ctx->selectionStatement())
     return self(p);
 
+  if (auto p = ctx->iterationStatement())
+    return self(p);
+
   if (auto p = ctx->expressionStatement())
     return self(p);
 
   if (auto p = ctx->jumpStatement())
     return self(p);
 
+  ABORT();
+}
+
+Stmt*
+Ast2Asg::operator()(ast::IterationStatementContext* ctx)
+{
+  if (ctx->While()) {
+    auto ret = make<WhileStmt>();
+    ret->cond = self(ctx->expression());
+    ret->body = self(ctx->statement());
+
+    return ret;
+  }
   ABORT();
 }
 

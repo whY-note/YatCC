@@ -68,6 +68,8 @@ public:
 
   Stmt* operator()(ast::StatementContext* ctx);
 
+  Stmt* operator()(ast::IterationStatementContext* ctx);
+
   Stmt* operator()(ast::SelectionStatementContext* ctx);
 
   CompoundStmt* operator()(ast::CompoundStatementContext* ctx);
