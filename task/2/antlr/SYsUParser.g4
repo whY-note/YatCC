@@ -34,7 +34,7 @@ unaryExpression
     ;
 
 unaryOperator
-    :   Plus | Minus | Star
+    :   Plus | Minus | Star | Exclaim
     ;
 
 logicalOrExpression

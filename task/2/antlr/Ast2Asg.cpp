@@ -504,6 +504,10 @@ Ast2Asg::operator()(ast::UnaryExpressionContext* ctx)
       ret->op = ret->kNeg;
       break;
 
+    case ast::Exclaim:
+      ret->op = ret->kNot;
+      break;
+
     default:
       ABORT();
   }
